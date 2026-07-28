@@ -1,6 +1,6 @@
 services:
   fnos-fan-webui:
-    image: ghcr.io/REPLACE_WITH_GITHUB_OWNER/fnos-fan-webui:latest
+    image: ghcr.io/wwu-unique/fnos-fan-webui:latest
     # To build locally instead, uncomment the next line and remove `image:`.
     # build: .
     container_name: fnos-fan-webui

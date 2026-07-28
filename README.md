@@ -74,13 +74,13 @@ CPU / NVMe / 磁盘温度 ─┐
 ```bash
 mkdir -p /opt/fnos-fan-webui/data
 cd /opt/fnos-fan-webui
-curl -fsSLO https://raw.githubusercontent.com/REPLACE_WITH_GITHUB_OWNER/fnos-fan-webui/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/wwu-unique/fnos-fan-webui/main/docker-compose.yml
 ```
 
 编辑 `docker-compose.yml`，把：
 
 ```yaml
-image: ghcr.io/REPLACE_WITH_GITHUB_OWNER/fnos-fan-webui:latest
+image: ghcr.io/wwu-unique/fnos-fan-webui:latest
 ```
 
 替换为仓库实际 owner，例如：
@@ -107,7 +107,7 @@ http://NAS_LAN_IP:8080/
 ### 4.3 从源码构建
 
 ```bash
-git clone https://github.com/REPLACE_WITH_GITHUB_OWNER/fnos-fan-webui.git
+git clone https://github.com/wwu-unique/fnos-fan-webui.git
 cd fnos-fan-webui
 mkdir -p data
 sed -i 's|^    image:.*|    # image: disabled for local build|' docker-compose.yml
