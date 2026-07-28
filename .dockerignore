@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+data/
+.git/
+.github/
+*.bak*
+.env
+.DS_Store

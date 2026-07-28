@@ -1,0 +1,10 @@
+[Unit]
+Description=Collect disk temperatures for FNOS fan control
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/fnan-webui/collect_disk_temps.sh
+User=root
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run disk temperature collection every 30 seconds
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=30
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

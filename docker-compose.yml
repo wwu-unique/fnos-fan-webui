@@ -1,0 +1,24 @@
+services:
+  fnos-fan-webui:
+    image: ghcr.io/REPLACE_WITH_GITHUB_OWNER/fnos-fan-webui:latest
+    # To build locally instead, uncomment the next line and remove `image:`.
+    # build: .
+    container_name: fnos-fan-webui
+    restart: unless-stopped
+    privileged: true # Required to write the host PWM hwmon node.
+    ports:
+      - "8080:8080"
+    volumes:
+      # Required: exposes qnap8528 pwm1/fan1_input and board sensors to the container.
+      - /sys/class/hwmon:/sys/class/hwmon:rw
+      # Persistent fan-curve configuration and temperature history.
+      - ./data:/data
+      # Optional: disk-temperature collector writes disk-temps.json here.
+      # - ./data:/data
+    environment:
+      - TZ=Asia/Shanghai
+
+# SECURITY: do not expose port 8080 to the public Internet. Put it behind an
+# authenticated reverse proxy or limit it to a trusted LAN.
+# COMPATIBILITY: the image alone cannot add qnap8528 support. The host must already
+# expose /sys/class/hwmon/*/name=qnap8528 with pwm1 and fan1_input.
