@@ -1,6 +1,7 @@
 services:
   fnos-fan-webui:
-    image: ghcr.io/wwu-unique/fnos-fan-webui:latest
+    # Pin a tested release. Change to :latest only after you have read the update notes.
+    image: ghcr.io/wwu-unique/fnos-fan-webui:1.0.0
     # To build locally instead, uncomment the next line and remove `image:`.
     # build: .
     container_name: fnos-fan-webui
@@ -11,10 +12,8 @@ services:
     volumes:
       # Required: exposes qnap8528 pwm1/fan1_input and board sensors to the container.
       - /sys/class/hwmon:/sys/class/hwmon:rw
-      # Persistent fan-curve configuration and temperature history.
+      # Persistent fan-curve configuration, history, and optional disk temperatures.
       - ./data:/data
-      # Optional: disk-temperature collector writes disk-temps.json here.
-      # - ./data:/data
     environment:
       - TZ=Asia/Shanghai
 

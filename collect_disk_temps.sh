@@ -1,11 +1,12 @@
 #!/bin/bash
 # collect_disk_temps.sh - Collect disk temperatures via smartctl and write to JSON
 # Run on FNOS host via systemd timer every 30 seconds
-# Writes to /root/fnan-webui/data/disk-temps.json (mounted into Docker as /data/disk-temps.json)
+# Writes to /opt/fnos-fan-webui/data/disk-temps.json by default
+# (mounted into Docker as /data/disk-temps.json). Override with DATA_DIR=/path.
 
 set -euo pipefail
 
-DATA_DIR="/root/fnan-webui/data"
+DATA_DIR="${DATA_DIR:-/opt/fnos-fan-webui/data}"
 OUTPUT_FILE="${DATA_DIR}/disk-temps.json"
 
 mkdir -p "$DATA_DIR"
