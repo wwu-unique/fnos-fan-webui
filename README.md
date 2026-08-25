@@ -325,6 +325,75 @@ done
 
 必须看到 `qnap8528`，并且对应 hwmon 目录必须存在 `pwm1` 和 `fan1_input`。如果内核升级后不再存在，先恢复/重新适配宿主机模块；Docker 镜像无法解决该问题。
 
+### 内核升级后恢复 qnap8528 驱动（QU-605 实测流程）
+
+fnOS 内核升级后（例如 `6.18.18.c788-trim → 6.18.18.c1032-trim`），旧 `.ko` 的 vermagic 与新版不匹配，`insmod` 会报 `invalid module format`，需要针对当前内核重新编译。以下流程已在 QU-605 上完整验证（2026-08-25）。
+
+**1. 确认源码在宿主机（推荐先查，不要急着上外网）**
+
+```bash
+ls /var/lib/fnos-qnap8528-build/src/qnap8528.c
+```
+
+> 若没有，从 GitHub 拉取（需能访问外网）：
+> ```bash
+> git clone https://github.com/ananclub/qnap8528 /var/lib/fnos-qnap8528-build
+> ```
+
+**2. 确认当前内核 headers 与编译工具链可用**
+
+```bash
+ls /lib/modules/$(uname -r)/build/Makefile
+gcc --version && make --version | head -1
+```
+
+**3. 解决普通用户无 root 写权限（关键）**
+
+fnOS 普通 SSH 用户无法 `sudo`（sudo 需要独立密码），但 `docker` 组用户可用特权容器以 root 操作：
+
+```bash
+docker run --rm -v /:/host alpine chmod -R a+w /host/var/lib/fnos-qnap8528-build/src/
+```
+
+**4. 用当前内核 headers 重编**
+
+```bash
+cd /var/lib/fnos-qnap8528-build/src
+make -C /lib/modules/$(uname -r)/build M=$PWD modules
+```
+
+成功后产物为 `qnap8528.ko`（大小会变化，约 597KB）。
+
+**5. 加载并确认 hwmon 节点出现**
+
+```bash
+docker run --rm -v /:/host alpine insmod /host/var/lib/fnos-qnap8528-build/src/qnap8528.ko skip_hw_check=true
+lsmod | grep qnap8528
+for h in /sys/class/hwmon/hwmon*; do [ -r "$h/name" ] && printf '%s: %s\n' "$h" "$(cat "$h/name")"; done
+```
+
+正常会新增一个 `hwmonN: qnap8528`，且存在 `pwm1`、`fan1_input`。
+
+**6. 持久化：安装到新内核 extra 目录并 depmod**
+
+```bash
+docker run --rm -v /:/host alpine sh -c \
+  "mkdir -p /host/lib/modules/$(uname -r)/extra && cp /host/var/lib/fnos-qnap8528-build/src/qnap8528.ko /host/lib/modules/$(uname -r)/extra/ && depmod -b /host $(uname -r)"
+```
+
+确认 `/etc/modules-load.d/qnap8528.conf`（内容 `qnap8528`）与 `/etc/modprobe.d/qnap8528.conf`（内容 `options qnap8528 skip_hw_check=true`）已存在；没有则用容器 root 补上。
+
+**7. 重启 fan-webui 容器，验证 RPM 真实回读**
+
+```bash
+docker restart fnos-fan-webui
+docker logs --tail 5 fnos-fan-webui
+```
+
+正常日志会出现 `RPM: 24xx`（不再是 `RPM:0`），WebUI 高级诊断中 `模块：已加载`、`PWM：可读写`。
+
+> **为什么用容器而不是直接 sudo？** QU-605 的 fnOS SSH 用户 sudo 需要 root 密码（与登录密码不同），而 docker 组用户天然可用特权容器以 root 身份操作宿主文件与内核模块——这是该机型上唯二免 root 密码的运维通道之一。
+
 ## RPM 是 0 或明显不合理
 
 `fan1_input` 的含义由 EC 驱动决定。当前 RPM 处理逻辑只在 QU-605 上完成验证。其它设备看到异常 RPM 时，停止依据该数值调曲线，并自行确认硬件传感器语义。
